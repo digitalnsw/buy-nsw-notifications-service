@@ -6,9 +6,5 @@ module NotificationService
     def expired?
       expiry.present? && expiry < Time.now
     end
-
-    def token_expired?
-      token_expiry.present? && token_expiry < Time.now
-    end
   end
 end

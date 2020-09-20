@@ -6,7 +6,7 @@ module NotificationService
     include SharedModules::Serializer
 
     skip_before_action :verify_authenticity_token, raise: false, only: [:create]
-    before_action :authenticate_service, only: [:create]
+    before_action :authenticate_service, only: [:create, :show]
     before_action :authenticate_user, only: [:index, :destroy, :run_action]
     before_action :set_notification, only: [:destroy, :run_action]
     before_action :set_notification_by_token, only: [:run_action_by_token]
@@ -34,9 +34,14 @@ module NotificationService
         "? = any(recipients)", session_user.id,
       ).order('created_at DESC').to_a.reject(&:expired?)
 
-      render json: notifications.map do |noti|
-        serialize(noti)
-      end
+      render json: { notifications: notifications.map { |noti| serialize(noti) } }
+    end
+
+    def show
+      unifier = params[:id]
+      noti = unifier.present? && Notification.where(unifier: unifier).to_a.reject(&:expired?).first
+      raise SharedModules::NotFound if noti.blank?
+      render json: { notification: serialize(noti) }
     end
 
     def create
@@ -51,7 +56,6 @@ module NotificationService
         },
         token: SecureRandom.base58(20),
         expiry: 2.weeks.from_now,
-        token_expiry: 2.weeks.from_now,
       )
 
       if noti.unifier.present? && Notification.where(unifier: noti.unifier).to_a.reject(&:expired?).size > 0
@@ -64,7 +68,7 @@ module NotificationService
         notification: noti
       })
 
-      render json: serialize(noti)
+      render json: { notification: serialize(noti) }
     end
 
     def destroy
@@ -113,7 +117,7 @@ module NotificationService
 
     def set_notification_by_token
       @noti = NotificationService::Notification.find_by(token: params[:token])
-      @noti = nil if @noti&.token_expired?
+      @noti = nil if @noti&.expired?
     end
 
     def set_notification
