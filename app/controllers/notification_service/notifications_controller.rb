@@ -7,8 +7,8 @@ module NotificationService
 
     skip_before_action :verify_authenticity_token, raise: false, only: [:create]
     before_action :authenticate_service, only: [:create, :show]
-    before_action :authenticate_user, only: [:index, :destroy, :run_action]
-    before_action :set_notification, only: [:destroy, :run_action]
+    before_action :authenticate_user, only: [:index, :run_action]
+    before_action :set_notification, only: [:run_action]
     before_action :set_notification_by_token, only: [:run_action_by_token]
 
     def serialize(noti)
@@ -71,10 +71,6 @@ module NotificationService
       render json: { notification: serialize(noti) }
     end
 
-    def destroy
-      @noti.destroy!
-    end
-
     def call(action)
       resource = action['resource']
       raise SharedModules::NotFound unless resource.match?(/\Aremote_[a-z_]+\Z/)
@@ -121,7 +117,7 @@ module NotificationService
     end
 
     def set_notification
-      @noti = NotificationService::Notification.find_by(id: params[:id])
+      @noti = NotificationService::Notification.find_by(id: params[:id].to_i)
       raise SharedModules::NotFound if @noti.nil? || @noti.expired?
       raise SharedModules::NotAuthorized if @noti.recipients.exclude?(session_user.id)
     end
