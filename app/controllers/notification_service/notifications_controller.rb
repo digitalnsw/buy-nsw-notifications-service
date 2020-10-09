@@ -94,18 +94,18 @@ module NotificationService
 
     def run_action_by_token
       if session_user && @noti.recipients.exclude?(session_user.id)
-        redirect_to '/ict/failure/logout_first'
+        redirect_to '/failure/logout_first'
       elsif @noti
         action = @noti.actions.find{|a| a['key'] == params[:action_key] }
         call(action) if action['resource']
         @noti.destroy!
         if action['success_message']
-          redirect_to '/ict/success/' + action['success_message']
+          redirect_to '/success/' + action['success_message']
         else
-          redirect_to '/ict/success/notification'
+          redirect_to '/success/notification'
         end
       else
-        redirect_to '/ict/failure/notification'
+        redirect_to '/failure/notification'
       end
     end
 
