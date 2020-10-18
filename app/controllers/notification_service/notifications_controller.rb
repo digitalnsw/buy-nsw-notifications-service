@@ -12,7 +12,7 @@ module NotificationService
     before_action :set_notification_by_token, only: [:run_action_by_token]
 
     def serialize(noti)
-      unescape_recursive(
+      full_sanitize_recursive(
         {
           id: noti.id,
           subject: noti.subject,
