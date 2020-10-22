@@ -93,7 +93,7 @@ module NotificationService
     end
 
     def run_action_by_token
-      if session_user && @noti.recipients.exclude?(session_user.id)
+      if session_user && @noti&.recipients&.exclude?(session_user.id)
         redirect_to '/failure/logout_first'
       elsif @noti
         action = @noti.actions.find{|a| a['key'] == params[:action_key] }
