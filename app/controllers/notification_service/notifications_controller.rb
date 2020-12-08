@@ -5,8 +5,8 @@ module NotificationService
   class NotificationsController < NotificationService::ApplicationController
     include SharedModules::Serializer
 
-    skip_before_action :verify_authenticity_token, raise: false, only: [:create]
-    before_action :authenticate_service, only: [:create, :show]
+    skip_before_action :verify_authenticity_token, raise: false, only: [:create, :destroy]
+    before_action :authenticate_service, only: [:create, :show, :destroy]
     before_action :authenticate_user, only: [:index, :run_action]
     before_action :set_notification, only: [:run_action]
     before_action :set_notification_by_token, only: [:run_action_by_token]
@@ -42,6 +42,12 @@ module NotificationService
       noti = unifier.present? && Notification.where(unifier: unifier).to_a.reject(&:expired?).first
       raise SharedModules::NotFound if noti.blank?
       render json: { notification: serialize(noti) }
+    end
+
+    def destroy
+      noti = Notification.find_by(id: params[:id])
+      noti.destroy! if noti.present?
+      render json: { message: 'Notification successfully discarded' }, status: :accepted
     end
 
     def create
